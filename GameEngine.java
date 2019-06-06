@@ -93,117 +93,83 @@ public class GameEngine extends SurfaceView implements Runnable {
         cageCatcherPosition.y = 100;
     }
 
-// setup player hitbox
-
-        this.playerHitbox = new Rect(
-                this.player.x,
-                this.player.y,
-                this.player.x+this.playerImage.getWidth(),
-                this.player.y + playerImage.getHeight());
-        // setup cage
-        this.cageImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.box);
-        this.cage = new Point();
-        this.cage.x = 700;
-        this.cage.y = 100;
-
-        this.cageHitbox = new Rect(
-               this.cage.x,
-               this.cage.y,
-                this.cage.x+this.cageImage.getWidth(),
-                this.cage.y + cageImage.getHeight());
-        // setup cage
-
-// setuo sparrow
-        this.sparrowImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.bird64);
-        this.sparrow = new Point();
-        this.sparrow.x = 100;
-        this.sparrow.y = 400;
-
-        this.catImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.cat64);
-        this.cat = new Point();
-        this.cat.x = 100;
-        this.cat.y = 700;
-
-        // Deal with user input
-
+    @Override
+    public void run() {
+        while (gameIsRunning == true) {
+            updateGame();    // updating positions of stuff
+            redrawSprites(); // drawing the stuff
+            controlFPS();
         }
+    }
+    // CAGE SPEED
+    final int CAGE_SPEED = 20;
 
-        @Override
-        public void run() {while (gameIsRunning == true) {
-            this.updatePositions();
-            this.redrawSprites();
-            this.setFPS();
-        }
-        }
-
-
-        public void pauseGame() {
-            gameIsRunning = false;
-            try {
-                gameThread.join();
-            } catch (InterruptedException e) {
-                // Error
-            }
-        }
-
-        public void resumeGame() {
-            gameIsRunning = true;
-            gameThread = new Thread(this);
-            gameThread.start();
-        }
-
-
-
-
+    // CAT SPEED
     final int CAT_SPEED = 20;
-    final int BIRD_SPEED = 10;
-    final int CAGE_SPEED = 15;
-    boolean cageIsMovingDown  = true;
+    // Sparrow speed
+    final int SPARROW_SPEED = 10;
+
+
+    boolean CageMovingRight = true;
 
     // Game Loop methods
-    public void updatePositions() {
-this.cat.x = this.cat.x + CAT_SPEED;
-this.sparrow.x =this.sparrow.x +  BIRD_SPEED;
-this.cage.x = this.cage.x + CAGE_SPEED;
+    public void updateGame() {
 
-        Log.d(TAG,"Bullet position: " + this.bullet.getxPosition() + ", " + this.bullet.getyPosition());
-        Log.d(TAG,"cage position: " + this.cage.get() + ", " + this.enemy.getyPosition());
 
-        // make enemy move up & down
 
-        if (cageIsMovingDown == true) {
-            this.enemy.setyPosition(this.enemy.getyPosition() + 30);
+
+// CAGE MOVING
+        this.cageCatcher.setxPosition(this.cageCatcher.getxPosition() - CAGE_SPEED);
+
+
+
+
+        // Cat moving
+        this.cat.setxPosition(this.cat.getxPosition()-CAT_SPEED);
+
+
+// Sparrow hitbox
+        this.sparrow.setxPosition(this.sparrow.getxPosition()-SPARROW_SPEED);
+        // cat hitbox
+        this.cat.getHitbox().left = this.cat.getxPosition();
+        this.cat.getHitbox().top = this.cat.getyPosition();
+        this.cat.getHitbox().right = this.cat.getxPosition() + this.cat.getImage().getWidth();
+        this.cat.getHitbox().bottom = this.cat.getyPosition() + this.cat.getImage().getHeight();
+
+        // cage hitbox
+        this.cageCatcher.getHitbox().left = this.cageCatcher.getxPosition();
+        this.cageCatcher.getHitbox().top = this.cageCatcher.getyPosition();
+        this.cageCatcher.getHitbox().right = this.cageCatcher.getxPosition() + this.cageCatcher.getImage().getWidth();
+        this.cageCatcher.getHitbox().bottom = this.cageCatcher.getyPosition() + this.cageCatcher.getImage().getHeight();
+
+
+// Cage back to position
+        int backOfCage = this.cageCatcher.getxPosition() + this.cageCatcher.getImage().getWidth();
+        if (backOfCage <= 0) {
+            // restart him at original position
+            this.cageCatcher.setxPosition(1500);
+            this.cageCatcher.setyPosition(120);
         }
 
 
-        // update the enemy hitbox
-        this.enemy.updateHitbox();
-
-
-        // do collision detection
-        // -----------------------
-        // R1. colliding with bottom of screen
-        if (this.enemy.getyPosition() >= this.screenHeight-400) {
-            cageIsMovingDown = false;
-        }
-        // R2. colliding with top of screen
-        if (this.enemy.getyPosition() < 120 ) {
-            cageIsMovingDown = true;
+        // Cat back to position
+        int backOfCat = this.cat.getxPosition() + this.cat.getImage().getWidth();
+        if (backOfCat <= 0) {
+            // restart him at original position
+            this.cat.setxPosition(1500);
+            this.cat.setyPosition(700);
         }
 
 
-
-        // MAKE BULLET MOVE
-
-        // 1. calculate distance between bullet and enemy
-        double a = this.enemy.getxPosition() - this.bullet.getxPosition();
-        double b = this.enemy.getyPosition() - this.bullet.getyPosition();
+// making Bullet Move
+        double a = this.cageCatcher.getxPosition() - this.bullet.getxPosition();
+        double b = this.cageCatcher.getyPosition() - this.bullet.getyPosition();
 
         // d = sqrt(a^2 + b^2)
 
         double d = Math.sqrt((a * a) + (b * b));
 
-        Log.d(TAG, "Distance to cage: " + d);
+        Log.d(TAG, "Distance to enemy: " + d);
 
         // 2. calculate xn and yn constants
         // (amount of x to move, amount of y to move)
@@ -222,15 +188,19 @@ this.cage.x = this.cage.x + CAGE_SPEED;
 
         // COLLISION DETECTION FOR BULLET
         // -----------------------------
-        // R1: When bullet intersects the enemy, restart bullet position
-        if (bullet.getHitbox().intersect(enemy.getHitbox())) {
 
-            // UPDATE THE SCORE
-            this.score = this.score + 1;
+
+
+
+        // R1: When bullet intersects the enemy, restart bullet position
+        if (bullet.getHitbox().intersect(cageCatcher.getHitbox())) {
+
+
+
 
             // RESTART THE BULLET FROM INITIAL POSITION
-            this.bullet.setxPosition(100);
-            this.bullet.setyPosition(600);
+            this.cageCatcher.setxPosition(this.cat.getxPosition());
+            this.cageCatcher.setyPosition(this.cat.getyPosition());
 
             // RESTART THE HITBOX
             this.bullet.updateHitbox();
@@ -238,11 +208,9 @@ this.cage.x = this.cage.x + CAGE_SPEED;
 
 
 
-        Log.d(TAG,"----------");
+
+
     }
-
-
-
 
 
     public void outputVisibleArea() {
@@ -258,12 +226,11 @@ this.cage.x = this.cage.x + CAGE_SPEED;
         if (holder.getSurface().isValid()) {
 
             // initialize the canvas
-            this.canvas = holder.lockCanvas();
+            canvas = holder.lockCanvas();
             // --------------------------------
 
             // set the game's background color
-            this.canvas.drawColor(Color.argb(255,255,255,255));
-
+            canvas.drawColor(Color.argb(255,255,255,255));
 
             // setup stroke style and width
             paintbrush.setStyle(Paint.Style.FILL);
@@ -279,30 +246,27 @@ this.cage.x = this.cage.x + CAGE_SPEED;
             this.outputVisibleArea();
 
             // --------------------------------------------------------
-            // draw player, sparrow and cat
+            // draw player , sparrow , cat and cage
             // --------------------------------------------------------
 
-            //1. draw player
-            canvas.drawBitmap(playerImage,this.player.x,this.player.y,paintbrush);
-            //2. draw sparrow
-            canvas.drawBitmap(sparrowImage,this.sparrow.x,this.sparrow.y,paintbrush);
-            //3.  draw cat
-            canvas.drawBitmap(catImage, this.cat.x,this.cat.y,paintbrush);
+            // 1. player
+            canvas.drawBitmap(this.player.getImage(), this.player.getxPosition(), this.player.getyPosition(), paintbrush);
+
+            // 2. sparrow
+            canvas.drawBitmap(this.sparrow.getImage(), this.sparrow.getxPosition(), this.sparrow.getyPosition(), paintbrush);
+
+            //3. cat
+            canvas.drawBitmap(this.cat.getImage(), this.cat.getxPosition(), this.cat.getyPosition(), paintbrush);
+
+
+            //3. cage
+            canvas.drawBitmap(this.cageCatcher.getImage(), this.cageCatcher.getxPosition(), this.cageCatcher.getyPosition(), paintbrush);
             // --------------------------------------------------------
             // draw hitbox on player
             // --------------------------------------------------------
-            // 1. change the paintbrush settings so we can see the hitbox
-            paintbrush.setColor(Color.BLUE);
+            Rect r = player.getHitbox();
             paintbrush.setStyle(Paint.Style.STROKE);
-            paintbrush.setStrokeWidth(5);
-
-            // 2. draw the hitbox
-            canvas.drawRect(this.playerHitbox.left,
-                    this.playerHitbox.top,
-                    this.playerHitbox.right,
-                    this.playerHitbox.bottom,
-                    paintbrush
-            );
+            canvas.drawRect(r, paintbrush);
 
 
             // --------------------------------------------------------
@@ -313,13 +277,64 @@ this.cage.x = this.cage.x + CAGE_SPEED;
             String screenInfo = "Screen size: (" + this.screenWidth + "," + this.screenHeight + ")";
             canvas.drawText(screenInfo, 10, 100, paintbrush);
 
+
+// Draw cat hitbox
+            paintbrush.setColor(Color.RED);
+            paintbrush.setTextSize(60);
+            paintbrush.setStrokeWidth(5);
+            canvas.drawRect(this.cat.getHitbox().left,
+                    this.cat.getHitbox().top,
+                    this.cat.getHitbox().right,
+                    this.cat.getHitbox().bottom,
+                    paintbrush
+            );
+
+
+            // Draw cage hitbox
+            paintbrush.setColor(Color.RED);
+            paintbrush.setTextSize(60);
+            paintbrush.setStrokeWidth(5);
+            canvas.drawRect(this.cageCatcher.getHitbox().left,
+                    this.cageCatcher.getHitbox().top,
+                    this.cageCatcher.getHitbox().right,
+                    this.cageCatcher.getHitbox().bottom,
+                    paintbrush
+            );
+
+
+
+            // draw bullet
+            paintbrush.setColor(Color.BLACK);
+            paintbrush.setStyle(Paint.Style.FILL);
+            paintbrush.setStrokeWidth(8);
+            canvas.drawRect(
+                    this.bullet.getxPosition(),
+                    this.bullet.getyPosition(),
+                    this.bullet.getxPosition() + this.bullet.getWidth(),
+                    this.bullet.getyPosition() + this.bullet.getWidth(),
+                    paintbrush
+            );
+
+            // draw the bullet hitbox
+            paintbrush.setColor(Color.RED);
+            paintbrush.setStyle(Paint.Style.STROKE);
+            canvas.drawRect(
+                    this.bullet.getHitbox(),
+                    paintbrush
+            );
             // --------------------------------
             holder.unlockCanvasAndPost(canvas);
+
+
+
+
+
+
         }
 
     }
 
-    public void setFPS() {
+    public void controlFPS() {
         try {
             gameThread.sleep(17);
         }
@@ -332,17 +347,41 @@ this.cage.x = this.cage.x + CAGE_SPEED;
     // Deal with user input
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction() & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_UP:
-                break;
-            case MotionEvent.ACTION_DOWN:
-                break;
-       }
+        int userAction = event.getActionMasked();
+        //@TODO: What should happen when person touches the screen?
+        if (userAction == MotionEvent.ACTION_DOWN) {
+            Log.d(TAG, "Person tapped the screen");
+
+            // @TODO: Write code so when person taps down, player MOVES UP!
+            this.bullet.setyPosition(this.bullet.getyPosition() - 60);
+
+            // update hitbox position
+            this.bullet.getHitbox().left = this.bullet.getxPosition();
+            this.player.getHitbox().top = this.player.getyPosition();
+            this.player.getHitbox().right = this.player.getxPosition() + this.bullet.getWidth();
+            this.bullet.getHitbox().bottom = this.bullet.getyPosition() ;
+        }
+        else if (userAction == MotionEvent.ACTION_UP) {
+            Log.d(TAG, "Person lifted finger");
+        }
         return true;
     }
+
+    // Game status - pause & resume
+    public void pauseGame() {
+        gameIsRunning = false;
+        try {
+            gameThread.join();
+        }
+        catch (InterruptedException e) {
+
+        }
+    }
+    public void  resumeGame() {
+        gameIsRunning = true;
+        gameThread = new Thread(this);
+        gameThread.start();
+    }
+
 }
-
-
-
-
 
