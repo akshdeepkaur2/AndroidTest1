@@ -16,34 +16,19 @@ import android.view.SurfaceView;
 import java.util.ArrayList;
 
 public class GameEngine extends SurfaceView implements Runnable {
-     final String TAG = "SPARROW";
-
+    final String TAG = "SPARROW";
     // game thread variables
-    Thread gameThread = null;
-     boolean gameIsRunning;
+    private Thread gameThread = null;
+    private volatile boolean gameIsRunning;
 
     // drawing variables
-     Canvas canvas;
-     Paint paintbrush;
-     SurfaceHolder holder;
+    private Canvas canvas;
+    private Paint paintbrush;
+    private SurfaceHolder holder;
 
     // Screen resolution varaibles
-     int screenWidth;
-     int screenHeight;
-     //drawing variables
-    // player variables
-    Bitmap playerImage;
-    Rect playerHitbox;
-     Point player;
-     //cat variables
-    Bitmap catImage;
-   Point cat;
-   //sparrow variables
-    Bitmap sparrowImage;
-    Point sparrow;
-    //Cage variables
-    Bitmap cageImage;
-    Point cage;
+    private int screenWidth;
+    private int screenHeight;
 
     // VISIBLE GAME PLAY AREA
     // These variables are set in the constructor
@@ -52,12 +37,21 @@ public class GameEngine extends SurfaceView implements Runnable {
     int VISIBLE_RIGHT;
     int VISIBLE_BOTTOM;
 
+
+    // point
+    Point cageCatcherPosition;
     // SPRITES
     Square bullet;
-    int SQUARE_WIDTH = 100;
+    int SQUARE_WIDTH = 50;
 
-    Square enemy;
 
+    CageCatcher cageCatcher;
+    Sprite player;
+    Sprite sparrow;
+    Cat cat;
+
+
+    
 
 
 
@@ -105,6 +99,13 @@ public class GameEngine extends SurfaceView implements Runnable {
         this.cage.x = 700;
         this.cage.y = 100;
 
+        this.cageHitbox = new Rect(
+               this.cage.x,
+               this.cage.y,
+                this.cage.x+this.cageImage.getWidth(),
+                this.cage.y + cageImage.getHeight());
+        // setup cage
+
 // setuo sparrow
         this.sparrowImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.bird64);
         this.sparrow = new Point();
@@ -150,15 +151,44 @@ public class GameEngine extends SurfaceView implements Runnable {
     final int CAT_SPEED = 20;
     final int BIRD_SPEED = 10;
     final int CAGE_SPEED = 15;
+    boolean cageIsMovingDown  = true;
 
     // Game Loop methods
     public void updatePositions() {
 this.cat.x = this.cat.x + CAT_SPEED;
 this.sparrow.x =this.sparrow.x +  BIRD_SPEED;
-        Log.d(TAG,"Bullet position: " + this.bullet.getxPosition() + ", " + this.bullet.getyPosition());
-        Log.d(TAG,"Enemy position: " + this.enemy.getxPosition() + ", " + this.enemy.getyPosition());
+this.cage.x = this.cage.x + CAGE_SPEED;
 
-        //calculate the distance
+        Log.d(TAG,"Bullet position: " + this.bullet.getxPosition() + ", " + this.bullet.getyPosition());
+        Log.d(TAG,"cage position: " + this.cage.get() + ", " + this.enemy.getyPosition());
+
+        // make enemy move up & down
+
+        if (cageIsMovingDown == true) {
+            this.enemy.setyPosition(this.enemy.getyPosition() + 30);
+        }
+
+
+        // update the enemy hitbox
+        this.enemy.updateHitbox();
+
+
+        // do collision detection
+        // -----------------------
+        // R1. colliding with bottom of screen
+        if (this.enemy.getyPosition() >= this.screenHeight-400) {
+            cageIsMovingDown = false;
+        }
+        // R2. colliding with top of screen
+        if (this.enemy.getyPosition() < 120 ) {
+            cageIsMovingDown = true;
+        }
+
+
+
+        // MAKE BULLET MOVE
+
+        // 1. calculate distance between bullet and enemy
         double a = this.enemy.getxPosition() - this.bullet.getxPosition();
         double b = this.enemy.getyPosition() - this.bullet.getyPosition();
 
@@ -166,7 +196,7 @@ this.sparrow.x =this.sparrow.x +  BIRD_SPEED;
 
         double d = Math.sqrt((a * a) + (b * b));
 
-        Log.d(TAG, "Distance to enemy: " + d);
+        Log.d(TAG, "Distance to cage: " + d);
 
         // 2. calculate xn and yn constants
         // (amount of x to move, amount of y to move)
@@ -178,6 +208,28 @@ this.sparrow.x =this.sparrow.x +  BIRD_SPEED;
         int newY = this.bullet.getyPosition() + (int) (yn * 15);
         this.bullet.setxPosition(newX);
         this.bullet.setyPosition(newY);
+
+        // 4. update the bullet hitbox position
+        this.bullet.updateHitbox();
+
+
+        // COLLISION DETECTION FOR BULLET
+        // -----------------------------
+        // R1: When bullet intersects the enemy, restart bullet position
+        if (bullet.getHitbox().intersect(enemy.getHitbox())) {
+
+            // UPDATE THE SCORE
+            this.score = this.score + 1;
+
+            // RESTART THE BULLET FROM INITIAL POSITION
+            this.bullet.setxPosition(100);
+            this.bullet.setyPosition(600);
+
+            // RESTART THE HITBOX
+            this.bullet.updateHitbox();
+        }
+
+
 
         Log.d(TAG,"----------");
     }
