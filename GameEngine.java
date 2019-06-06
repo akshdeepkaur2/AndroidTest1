@@ -38,9 +38,12 @@ public class GameEngine extends SurfaceView implements Runnable {
      //cat variables
     Bitmap catImage;
    Point cat;
-   //sparroe variables
+   //sparrow variables
     Bitmap sparrowImage;
     Point sparrow;
+    //Cage variables
+    Bitmap cageImage;
+    Point cage;
 
     // VISIBLE GAME PLAY AREA
     // These variables are set in the constructor
@@ -96,10 +99,16 @@ public class GameEngine extends SurfaceView implements Runnable {
                 this.player.y,
                 this.player.x+this.playerImage.getWidth(),
                 this.player.y + playerImage.getHeight());
+        // setup cage
+        this.cageImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.robot64);
+        this.cage = new Point();
+        this.cage.x = 100;
+        this.cage.y = 900;
+
 // setuo sparrow
         this.sparrowImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.bird64);
         this.sparrow = new Point();
-        this.sparrow.x = 500;
+        this.sparrow.x = 100;
         this.sparrow.y = 400;
 
         this.catImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.cat64);
@@ -138,13 +147,19 @@ public class GameEngine extends SurfaceView implements Runnable {
 
 
 
-    final int CAT_SPEED = 50;
+    final int CAT_SPEED = 20;
+    final int BIRD_SPEED = 10;
+    final int CAGE_SPEED = 15;
 
     // Game Loop methods
     public void updatePositions() {
 this.cat.x = this.cat.x + CAT_SPEED;
+this.sparrow.x =this.sparrow.x +  BIRD_SPEED;
 
     }
+
+
+
 
 
     public void outputVisibleArea() {
