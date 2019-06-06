@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -15,20 +16,31 @@ import android.view.SurfaceView;
 import java.util.ArrayList;
 
 public class GameEngine extends SurfaceView implements Runnable {
-    private final String TAG = "SPARROW";
+     final String TAG = "SPARROW";
 
     // game thread variables
-    private Thread gameThread = null;
-    private volatile boolean gameIsRunning;
+    Thread gameThread = null;
+     boolean gameIsRunning;
 
     // drawing variables
-    private Canvas canvas;
-    private Paint paintbrush;
-    private SurfaceHolder holder;
+     Canvas canvas;
+     Paint paintbrush;
+     SurfaceHolder holder;
 
     // Screen resolution varaibles
-    private int screenWidth;
-    private int screenHeight;
+     int screenWidth;
+     int screenHeight;
+     //drawing variables
+    // player variables
+    Bitmap playerImage;
+    Rect playerHitbox;
+     Point player;
+     //cat variables
+    Bitmap catImage;
+   Point cat;
+   //sparroe variables
+    Bitmap sparrowImage;
+    Point sparrow;
 
     // VISIBLE GAME PLAY AREA
     // These variables are set in the constructor
@@ -43,13 +55,15 @@ public class GameEngine extends SurfaceView implements Runnable {
 
     Square enemy;
 
-    Sprite player;
-    Sprite sparrow;
-    Sprite cat;
+
+
+
     ArrayList<Square> bullets = new ArrayList<Square>();
 
     // GAME STATS
     int score = 0;
+    int lives = 3;
+
 
     public GameEngine(Context context, int screenW, int screenH) {
         super(context);
@@ -70,22 +84,70 @@ public class GameEngine extends SurfaceView implements Runnable {
 
 
         // initalize sprites
-        this.player = new Sprite(this.getContext(), 100, 700, R.drawable.player64);
-        this.sparrow = new Sprite(this.getContext(), 500, 200, R.drawable.bird64);
-        this.cat = new Sprite(this.getContext(), 1500, 700,R.drawable.cat64);
-    }
 
-    @Override
-    public void run() {
-        while (gameIsRunning == true) {
-            updateGame();    // updating positions of stuff
-            redrawSprites(); // drawing the stuff
-            controlFPS();
+        this.playerImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.bird64);
+        this.player = new Point();
+        this.player.x = 100;
+        this.player.y = 700;
+
+
+        this.playerHitbox = new Rect(
+                this.player.x,
+                this.player.y,
+                this.player.x+this.playerImage.getWidth(),
+                this.player.y + playerImage.getHeight());
+
+        this.sparrowImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.bird64);
+        this.sparrow = new Point();
+        this.sparrow.x = 500;
+        this.sparrow.y = 400;
+
+        this.catImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.cat64);
+        this.cat = new Point();
+        this.cat.x = 1500;
+        this.cat.y = 700;
+
+        // Deal with user input
+
         }
-    }
+
+        @Override
+        public void run() {while (gameIsRunning == true) {
+            this.updatePositions();
+            this.redrawSprites();
+            this.setFPS();
+        }
+        }
+
+
+        public void pauseGame() {
+            gameIsRunning = false;
+            try {
+                gameThread.join();
+            } catch (InterruptedException e) {
+                // Error
+            }
+        }
+
+        public void resumeGame() {
+            gameIsRunning = true;
+            gameThread = new Thread(this);
+            gameThread.start();
+        }
+
+
+
+
+
+
+
+
+    final int CAT_SPEED = 50;
 
     // Game Loop methods
-    public void updateGame() {
+    public void updatePositions() {
+this.cat.x = this.cat.x + CAT_SPEED;
+this.cat.y = this.cat.y + CAT_SPEED;
     }
 
 
@@ -102,11 +164,12 @@ public class GameEngine extends SurfaceView implements Runnable {
         if (holder.getSurface().isValid()) {
 
             // initialize the canvas
-            canvas = holder.lockCanvas();
+            this.canvas = holder.lockCanvas();
             // --------------------------------
 
             // set the game's background color
-            canvas.drawColor(Color.argb(255,255,255,255));
+            this.canvas.drawColor(Color.argb(255,255,255,255));
+
 
             // setup stroke style and width
             paintbrush.setStyle(Paint.Style.FILL);
@@ -126,18 +189,27 @@ public class GameEngine extends SurfaceView implements Runnable {
             // --------------------------------------------------------
 
             // 1. player
-            canvas.drawBitmap(this.player.getImage(), this.player.getxPosition(), this.player.getyPosition(), paintbrush);
+            //canvas.drawBitmap(this.player.x, this.player.y,  paintbrush);
 
             // 2. sparrow
-            canvas.drawBitmap(this.sparrow.getImage(), this.sparrow.getxPosition(), this.sparrow.getyPosition(), paintbrush);
-            // 3.
-            canvas.drawBitmap(this.cat.getImage(), this.cat.getxPosition(), this.cat.getyPosition(), paintbrush);
+           // canvas.drawBitmap(this.sparrow.x, this.sparrow.y , paintbrush);
+            // 3.Cat
+            //canvas.drawBitmap(this.cat.x, this.cat.y,  paintbrush);
             // --------------------------------------------------------
             // draw hitbox on player
             // --------------------------------------------------------
-            Rect r = player.getHitbox();
+            // 1. change the paintbrush settings so we can see the hitbox
+            paintbrush.setColor(Color.BLUE);
             paintbrush.setStyle(Paint.Style.STROKE);
-            canvas.drawRect(r, paintbrush);
+            paintbrush.setStrokeWidth(5);
+
+            // 2. draw the hitbox
+            canvas.drawRect(this.playerHitbox.left,
+                    this.playerHitbox.top,
+                    this.playerHitbox.right,
+                    this.playerHitbox.bottom,
+                    paintbrush
+            );
 
 
             // --------------------------------------------------------
@@ -154,7 +226,7 @@ public class GameEngine extends SurfaceView implements Runnable {
 
     }
 
-    public void controlFPS() {
+    public void setFPS() {
         try {
             gameThread.sleep(17);
         }
@@ -175,22 +247,9 @@ public class GameEngine extends SurfaceView implements Runnable {
        }
         return true;
     }
-
-    // Game status - pause & resume
-    public void pauseGame() {
-        gameIsRunning = false;
-        try {
-            gameThread.join();
-        }
-        catch (InterruptedException e) {
-
-        }
-    }
-    public void  resumeGame() {
-        gameIsRunning = true;
-        gameThread = new Thread(this);
-        gameThread.start();
-    }
-
 }
+
+
+
+
 
