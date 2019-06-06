@@ -51,7 +51,7 @@ public class GameEngine extends SurfaceView implements Runnable {
     Cat cat;
 
 
-    
+
 
 
 
@@ -82,10 +82,17 @@ public class GameEngine extends SurfaceView implements Runnable {
 
         // initalize sprites
 
-        this.playerImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.player64);
-        this.player = new Point();
-        this.player.x = 100;
-        this.player.y = 700;
+        this.player = new Sprite(this.getContext(), 100, 700, R.drawable.player64);
+        this.sparrow = new Sprite(this.getContext(), 500, 200, R.drawable.bird64);
+        this.cat = new Cat(context,1500, 700);
+        this.cageCatcher = new CageCatcher(context, 1500, 100);
+        this.bullet = new Square(context, 100, 800, SQUARE_WIDTH);
+
+        cageCatcherPosition = new Point();
+        cageCatcherPosition.x = 1500;
+        cageCatcherPosition.y = 100;
+    }
+
 // setup player hitbox
 
         this.playerHitbox = new Rect(
