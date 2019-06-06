@@ -100,10 +100,10 @@ public class GameEngine extends SurfaceView implements Runnable {
                 this.player.x+this.playerImage.getWidth(),
                 this.player.y + playerImage.getHeight());
         // setup cage
-        this.cageImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.robot64);
+        this.cageImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.box);
         this.cage = new Point();
-        this.cage.x = 100;
-        this.cage.y = 900;
+        this.cage.x = 700;
+        this.cage.y = 100;
 
 // setuo sparrow
         this.sparrowImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.bird64);
@@ -155,7 +155,31 @@ public class GameEngine extends SurfaceView implements Runnable {
     public void updatePositions() {
 this.cat.x = this.cat.x + CAT_SPEED;
 this.sparrow.x =this.sparrow.x +  BIRD_SPEED;
+        Log.d(TAG,"Bullet position: " + this.bullet.getxPosition() + ", " + this.bullet.getyPosition());
+        Log.d(TAG,"Enemy position: " + this.enemy.getxPosition() + ", " + this.enemy.getyPosition());
 
+        //calculate the distance
+        double a = this.enemy.getxPosition() - this.bullet.getxPosition();
+        double b = this.enemy.getyPosition() - this.bullet.getyPosition();
+
+        // d = sqrt(a^2 + b^2)
+
+        double d = Math.sqrt((a * a) + (b * b));
+
+        Log.d(TAG, "Distance to enemy: " + d);
+
+        // 2. calculate xn and yn constants
+        // (amount of x to move, amount of y to move)
+        double xn = (a / d);
+        double yn = (b / d);
+
+        // 3. calculate new (x,y) coordinates
+        int newX = this.bullet.getxPosition() + (int) (xn * 15);
+        int newY = this.bullet.getyPosition() + (int) (yn * 15);
+        this.bullet.setxPosition(newX);
+        this.bullet.setyPosition(newY);
+
+        Log.d(TAG,"----------");
     }
 
 
