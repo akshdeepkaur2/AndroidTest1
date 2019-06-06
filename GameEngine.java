@@ -85,18 +85,18 @@ public class GameEngine extends SurfaceView implements Runnable {
 
         // initalize sprites
 
-        this.playerImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.bird64);
+        this.playerImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.player64);
         this.player = new Point();
         this.player.x = 100;
         this.player.y = 700;
-
+// setup player hitbox
 
         this.playerHitbox = new Rect(
                 this.player.x,
                 this.player.y,
                 this.player.x+this.playerImage.getWidth(),
                 this.player.y + playerImage.getHeight());
-
+// setuo sparrow
         this.sparrowImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.bird64);
         this.sparrow = new Point();
         this.sparrow.x = 500;
@@ -104,7 +104,7 @@ public class GameEngine extends SurfaceView implements Runnable {
 
         this.catImage = BitmapFactory.decodeResource(context.getResources(),R.drawable.cat64);
         this.cat = new Point();
-        this.cat.x = 1500;
+        this.cat.x = 100;
         this.cat.y = 700;
 
         // Deal with user input
@@ -138,16 +138,12 @@ public class GameEngine extends SurfaceView implements Runnable {
 
 
 
-
-
-
-
     final int CAT_SPEED = 50;
 
     // Game Loop methods
     public void updatePositions() {
 this.cat.x = this.cat.x + CAT_SPEED;
-this.cat.y = this.cat.y + CAT_SPEED;
+
     }
 
 
@@ -185,16 +181,15 @@ this.cat.y = this.cat.y + CAT_SPEED;
             this.outputVisibleArea();
 
             // --------------------------------------------------------
-            // draw player and sparrow
+            // draw player, sparrow and cat
             // --------------------------------------------------------
 
-            // 1. player
-            //canvas.drawBitmap(this.player.x, this.player.y,  paintbrush);
-
-            // 2. sparrow
-           // canvas.drawBitmap(this.sparrow.x, this.sparrow.y , paintbrush);
-            // 3.Cat
-            //canvas.drawBitmap(this.cat.x, this.cat.y,  paintbrush);
+            //1. draw player
+            canvas.drawBitmap(playerImage,this.player.x,this.player.y,paintbrush);
+            //2. draw sparrow
+            canvas.drawBitmap(sparrowImage,this.sparrow.x,this.sparrow.y,paintbrush);
+            //3.  draw cat
+            canvas.drawBitmap(catImage, this.cat.x,this.cat.y,paintbrush);
             // --------------------------------------------------------
             // draw hitbox on player
             // --------------------------------------------------------
