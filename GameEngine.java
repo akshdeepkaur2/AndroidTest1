@@ -45,7 +45,7 @@ public class GameEngine extends SurfaceView implements Runnable {
 
     Sprite player;
     Sprite sparrow;
-
+    Sprite cat;
     ArrayList<Square> bullets = new ArrayList<Square>();
 
     // GAME STATS
@@ -72,6 +72,7 @@ public class GameEngine extends SurfaceView implements Runnable {
         // initalize sprites
         this.player = new Sprite(this.getContext(), 100, 700, R.drawable.player64);
         this.sparrow = new Sprite(this.getContext(), 500, 200, R.drawable.bird64);
+        this.cat = new Sprite(this.getContext(), 1500, 700,R.drawable.cat64);
     }
 
     @Override
@@ -129,7 +130,8 @@ public class GameEngine extends SurfaceView implements Runnable {
 
             // 2. sparrow
             canvas.drawBitmap(this.sparrow.getImage(), this.sparrow.getxPosition(), this.sparrow.getyPosition(), paintbrush);
-
+            // 3.
+            canvas.drawBitmap(this.cat.getImage(), this.cat.getxPosition(), this.cat.getyPosition(), paintbrush);
             // --------------------------------------------------------
             // draw hitbox on player
             // --------------------------------------------------------
